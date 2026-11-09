@@ -2,101 +2,87 @@ using System.Text.Json;
 
 public class Messages
 {
-    public string CurrentLanguage { get; set; }
-    private Dictionary<string, string> _dictionary;
-    private Dictionary<string, string> _raceMap;
-    private Dictionary<string, string> _occupationMap;
-    private Dictionary<string, string> _displayRaceMap;
-    private Dictionary<string, string> _displayOccupationMap;
-    private Dictionary<string, string> _displayWeaponMap;
+    private const string FallbackLanguage = "English";
+    private readonly string _jsonPath;
 
-    public Messages()
+    public string CurrentLanguage { get; private set; } = FallbackLanguage;
+
+    private Dictionary<string, string> _dictionary = new();
+    private Dictionary<string, string> _raceMap = new();
+    private Dictionary<string, string> _occupationMap = new();
+    private Dictionary<string, string> _displayRaceMap = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, string> _displayOccupationMap = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, string> _displayWeaponMap = new(StringComparer.OrdinalIgnoreCase);
+
+    public Messages(string? jsonPath = null)
     {
-        CurrentLanguage = "English";
-        _dictionary = new Dictionary<string, string>();
-        _raceMap = new Dictionary<string, string>();
-        _occupationMap = new Dictionary<string, string>();
+        _jsonPath = jsonPath ?? Path.Combine(AppContext.BaseDirectory, "language_data.json");
     }
 
     public void SetCurrentLanguage(string language)
     {
         CurrentLanguage = language;
+        ReadDictionary();
     }
 
     public void ReadDictionary()
     {
-        string jsonPath = Path.Combine(AppContext.BaseDirectory, "language_data.json");
-        string jsonText = File.ReadAllText(jsonPath);
-        using JsonDocument doc = JsonDocument.Parse(jsonText);
+        try
+        {
+            using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(_jsonPath));
+            JsonElement root = doc.RootElement;
 
-        JsonElement langSection = doc.RootElement.GetProperty(CurrentLanguage);
+            if (!root.TryGetProperty(CurrentLanguage, out JsonElement lang) &&
+                !root.TryGetProperty(FallbackLanguage, out lang))
+                return;
 
-        _dictionary = new Dictionary<string, string>();
-        foreach (JsonProperty entry in langSection.GetProperty("dictionary").EnumerateObject())
-            _dictionary[entry.Name] = entry.Value.GetString() ?? string.Empty;
-
-        _raceMap = new Dictionary<string, string>();
-        foreach (JsonProperty entry in langSection.GetProperty("raceMap").EnumerateObject())
-            _raceMap[entry.Name] = entry.Value.GetString() ?? string.Empty;
-
-        _occupationMap = new Dictionary<string, string>();
-        foreach (JsonProperty entry in langSection.GetProperty("occupationMap").EnumerateObject())
-            _occupationMap[entry.Name] = entry.Value.GetString() ?? string.Empty;
-
-        _displayRaceMap = new Dictionary<string, string>();
-        foreach (JsonProperty entry in langSection.GetProperty("displayRaceMap").EnumerateObject())
-            _displayRaceMap[entry.Name] = entry.Value.GetString() ?? string.Empty;
-
-        _displayOccupationMap = new Dictionary<string, string>();
-        foreach (JsonProperty entry in langSection.GetProperty("displayOccupationMap").EnumerateObject())
-            _displayOccupationMap[entry.Name] = entry.Value.GetString() ?? string.Empty;
-
-        _displayWeaponMap = new Dictionary<string, string>();
-        foreach (JsonProperty entry in langSection.GetProperty("displayWeaponMap").EnumerateObject())
-            _displayWeaponMap[entry.Name] = entry.Value.GetString() ?? string.Empty;
+            _dictionary = Load(lang, "dictionary");
+            _raceMap = Load(lang, "raceMap");
+            _occupationMap = Load(lang, "occupationMap");
+            _displayRaceMap = Load(lang, "displayRaceMap");
+            _displayOccupationMap = Load(lang, "displayOccupationMap");
+            _displayWeaponMap = Load(lang, "displayWeaponMap");
+        }
+        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine($"Could not load language data: {ex.Message}");
+        }
     }
 
-    public string GetMessage(string key)
+    private static Dictionary<string, string> Load(JsonElement lang, string name)
     {
-        return _dictionary.ContainsKey(key) ? _dictionary[key] : $"[{key}]";
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (lang.TryGetProperty(name, out JsonElement section))
+            foreach (JsonProperty entry in section.EnumerateObject())
+                map[entry.Name] = entry.Value.GetString() ?? string.Empty;
+        return map;
     }
 
-    public bool IsValidRace(string? input)
-    {
-        if (string.IsNullOrWhiteSpace(input)) return false;
-        return _raceMap.ContainsKey(input.Trim().ToLower());
-    }
+    public string GetMessage(string key) =>
+        _dictionary.TryGetValue(key, out string? value) ? value : $"[{key}]";
 
-    public string NormalizeRace(string input)
-    {
-        return _raceMap.TryGetValue(input.Trim().ToLower(), out string? canonical) ? canonical : input;
-    }
+    public bool IsValidRace(string? input) =>
+        !string.IsNullOrWhiteSpace(input) && _raceMap.ContainsKey(input.Trim());
 
-    public bool IsValidOccupation(string? input)
-    {
-        if (string.IsNullOrWhiteSpace(input)) return false;
-        return _occupationMap.ContainsKey(input.Trim().ToLower());
-    }
+    public string NormalizeRace(string input) =>
+        _raceMap.TryGetValue(input.Trim(), out string? canonical)
+            ? canonical
+            : throw new ArgumentException($"Invalid race: {input}", nameof(input));
 
-    public string NormalizeOccupation(string input)
-    {
-        return _occupationMap.TryGetValue(input.Trim().ToLower(), out string? canonical) ? canonical : input;
-    }
+    public bool IsValidOccupation(string? input) =>
+        !string.IsNullOrWhiteSpace(input) && _occupationMap.ContainsKey(input.Trim());
 
-    public string TranslateRaceForDisplay(string race)
-    {
-        return _displayRaceMap.TryGetValue(race, out string? translated) ? translated : race;
-    }
+    public string NormalizeOccupation(string input) =>
+        _occupationMap.TryGetValue(input.Trim(), out string? canonical)
+            ? canonical
+            : throw new ArgumentException($"Invalid occupation: {input}", nameof(input));
 
-    public string TranslateOccupationForDisplay(string occupation)
-    {
-        return _displayOccupationMap.TryGetValue(occupation, out string? translated) ? translated : occupation;
-    }
+    public string TranslateRaceForDisplay(string race) =>
+        _displayRaceMap.TryGetValue(race, out string? t) ? t : race;
 
-    public string TranslateWeaponForDisplay(string weaponType)
-    {
-        return _displayWeaponMap.TryGetValue(weaponType, out string? translated) ? translated : weaponType;
-    }
+    public string TranslateOccupationForDisplay(string occupation) =>
+        _displayOccupationMap.TryGetValue(occupation, out string? t) ? t : occupation;
 
-
+    public string TranslateWeaponForDisplay(string weaponType) =>
+        _displayWeaponMap.TryGetValue(weaponType, out string? t) ? t : weaponType;
 }
