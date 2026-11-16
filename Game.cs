@@ -48,7 +48,7 @@ public class Game
                 bool inAdventureMenu = true;
                 while (inAdventureMenu)
                 {
-                    string selectedPath = PromptForPath(messages);
+                    string selectedPath = PromptForPath(player, messages);
 
                     if (selectedPath == "exit")
                     {
@@ -105,7 +105,8 @@ public class Game
         string trimmed = input.Trim().ToLower();
         return trimmed == "n" || trimmed == "north" ||
                trimmed == "s" || trimmed == "south" ||
-               trimmed == "e" || trimmed == "exit";
+               trimmed == "e" || trimmed == "exit" ||
+               IsInventoryCommand(trimmed);
     }
 
     public bool IsValidCombatChoice(string? input)
@@ -114,16 +115,30 @@ public class Game
         string trimmed = input.Trim().ToLower();
         return trimmed == "a" || trimmed == "attack" ||
                trimmed == "d" || trimmed == "drink" ||
-               trimmed == "r" || trimmed == "retreat";
+               trimmed == "r" || trimmed == "retreat" ||
+               IsInventoryCommand(trimmed);
     }
 
-    private string PromptForPath(Messages messages)
+    // "i"/"inventory" in any case, padded or not. English in every language.
+    public static bool IsInventoryCommand(string? input)
+    {
+        string? trimmed = input?.Trim().ToLower();
+        return trimmed == "i" || trimmed == "inventory";
+    }
+
+    private string PromptForPath(Player player, Messages messages)
     {
         while (true)
         {
             Console.WriteLine(messages.GetMessage("path_prompt_full"));
             Console.Write(messages.GetMessage("enter_choice"));
             string? input = Console.ReadLine()?.Trim().ToLower();
+
+            if (IsInventoryCommand(input))
+            {
+                player.DisplayInventory(messages);
+                continue;
+            }
 
             if (input == "north" || input == "n")
                 return "north";
@@ -153,6 +168,12 @@ public class Game
             Console.WriteLine(messages.GetMessage("dragon_encounter_prompt"));
             Console.Write(messages.GetMessage("enter_choice"));
             string? input = Console.ReadLine()?.Trim().ToLower();
+
+            if (IsInventoryCommand(input))
+            {
+                player.DisplayInventory(messages);
+                continue;
+            }
 
             if (input == "a" || input == "attack")
             {

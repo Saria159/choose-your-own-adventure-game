@@ -25,9 +25,12 @@ public class Merchant
         return NormalizeChoice(input) != null;
     }
 
-    // Maps a typed command to "armor", "weapon", "potion" or "leave"; null if invalid.
+    // Maps a typed command to "armor", "weapon", "potion", "leave" or "inventory"; null if invalid.
     public string? NormalizeChoice(string? input)
     {
+        if (Game.IsInventoryCommand(input))
+            return "inventory";
+
         return input?.Trim().ToLower() switch
         {
             "a" or "armor" => "armor",
@@ -84,13 +87,24 @@ public class Merchant
         Console.WriteLine(string.Format(messages.GetMessage("merchant_intro"), Name));
         Console.ResetColor();
 
+        bool showWares = true;
+
         while (true)
         {
-            ShowWares(player, messages);
+            if (showWares)
+                ShowWares(player, messages);
+            showWares = true;
+
             Console.Write(messages.GetMessage("merchant_prompt"));
 
             switch (NormalizeChoice(Console.ReadLine()))
             {
+                case "inventory":
+                    // Only the prompt comes back, so the Inventory isn't buried under the wares list.
+                    player.DisplayInventory(messages);
+                    showWares = false;
+                    break;
+
                 case "armor":
                     if (IsArmorSoldOut)
                         Console.WriteLine(messages.GetMessage("merchant_already_sold"));
