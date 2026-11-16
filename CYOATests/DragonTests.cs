@@ -213,7 +213,7 @@ public class GamePbi18Tests
 
         Assert.IsNotNull(method, "HandleDragonEncounter method was not found.");
 
-        method!.Invoke(game, new object[] { player, dragon, messages });
+        method!.Invoke(game, new object[] { player, dragon, messages, new CommandPrompt(Console.In, Console.Out, messages) });
 
         string output = writer.ToString();
 

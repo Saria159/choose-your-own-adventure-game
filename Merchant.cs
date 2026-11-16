@@ -20,27 +20,6 @@ public class Merchant
     public bool IsWeaponSoldOut { get; private set; }
     public int HealingPotionsLeft { get; private set; } = HealingPotionStock;
 
-    public bool IsValidMerchantChoice(string? input)
-    {
-        return NormalizeChoice(input) != null;
-    }
-
-    // Maps a typed command to "armor", "weapon", "potion", "leave" or "inventory"; null if invalid.
-    public string? NormalizeChoice(string? input)
-    {
-        if (Game.IsInventoryCommand(input))
-            return "inventory";
-
-        return input?.Trim().ToLower() switch
-        {
-            "a" or "armor" => "armor",
-            "w" or "weapon" => "weapon",
-            "p" or "potion" => "potion",
-            "l" or "leave" => "leave",
-            _ => null
-        };
-    }
-
     public bool CanAfford(Player player)
     {
         return player.Gold >= ItemPrice;
@@ -81,30 +60,22 @@ public class Merchant
     }
 
     // Console loop for the South path encounter. Purchase rules live in the methods above.
-    public void RunEncounter(Player player, Messages messages)
+    public void RunEncounter(Player player, Messages messages, CommandPrompt prompt)
     {
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine(string.Format(messages.GetMessage("merchant_intro"), Name));
         Console.ResetColor();
 
-        bool showWares = true;
-
         while (true)
         {
-            if (showWares)
-                ShowWares(player, messages);
-            showWares = true;
+            ShowWares(player, messages);
 
-            Console.Write(messages.GetMessage("merchant_prompt"));
+            // The prompt shows the Inventory without the wares (so it isn't buried under them),
+            // and shows the wares again after invalid input.
+            string command = prompt.Ask(CommandSet.Merchant, player, afterInvalid: () => ShowWares(player, messages));
 
-            switch (NormalizeChoice(Console.ReadLine()))
+            switch (command)
             {
-                case "inventory":
-                    // Only the prompt comes back, so the Inventory isn't buried under the wares list.
-                    player.DisplayInventory(messages);
-                    showWares = false;
-                    break;
-
                 case "armor":
                     if (IsArmorSoldOut)
                         Console.WriteLine(messages.GetMessage("merchant_already_sold"));

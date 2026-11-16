@@ -104,51 +104,5 @@ public class InventoryTests
         Assert.AreEqual(0, leaked.Length, string.Join(", ", leaked));
     }
 
-    // --- Command validation ---
-
-    [TestMethod]
-    [DataRow("i")]
-    [DataRow("inventory")]
-    [DataRow("I")]
-    [DataRow("INVENTORY")]
-    [DataRow("  i  ")]
-    [DataRow(" Inventory ")]
-    public void PathPrompt_AcceptsInventoryCommand(string input)
-    {
-        Assert.IsTrue(new Game().IsValidPathChoice(input));
-    }
-
-    [TestMethod]
-    [DataRow("i")]
-    [DataRow("inventory")]
-    [DataRow("I")]
-    [DataRow("INVENTORY")]
-    [DataRow("  i  ")]
-    [DataRow(" Inventory ")]
-    public void CombatPrompt_AcceptsInventoryCommand(string input)
-    {
-        Assert.IsTrue(new Game().IsValidCombatChoice(input));
-    }
-
-    [TestMethod]
-    [DataRow("i")]
-    [DataRow("inventory")]
-    [DataRow("I")]
-    [DataRow("INVENTORY")]
-    [DataRow("  i  ")]
-    [DataRow(" Inventory ")]
-    public void MerchantPrompt_MapsInventoryCommand(string input)
-    {
-        Assert.AreEqual("inventory", new Merchant().NormalizeChoice(input));
-    }
-
-    [TestMethod]
-    [DataRow("inv")]
-    [DataRow("items")]
-    public void InventoryCommand_RejectsOtherWords(string input)
-    {
-        Assert.IsFalse(new Game().IsValidPathChoice(input));
-        Assert.IsFalse(new Game().IsValidCombatChoice(input));
-        Assert.IsNull(new Merchant().NormalizeChoice(input));
-    }
+    // The Inventory command itself is tested in CommandPromptTests.
 }
