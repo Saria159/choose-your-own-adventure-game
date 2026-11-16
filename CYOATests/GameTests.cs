@@ -305,6 +305,17 @@ public class GameTests
     }
 
     [TestMethod]
+    [DataRow("d")]
+    [DataRow("drink")]
+    [DataRow("DRINK")]
+    [DataRow("  d  ")]
+    public void IsValidCombatChoice_ReturnsTrue_ForDrinkCommands(string input)
+    {
+        Game game = new Game();
+        Assert.IsTrue(game.IsValidCombatChoice(input));
+    }
+
+    [TestMethod]
     public void IsValidCombatChoice_ReturnsFalse_ForNull()
     {
         Game game = new Game();

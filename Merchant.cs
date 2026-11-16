@@ -6,25 +6,33 @@ public class Merchant
 
     public const int EnchantmentBonus = 4;
 
+    public const int HealingPotionPrice = 5;
+
+    public const int HealingPotionStock = 3;
+
     private const string ArmorArt = "[|#|]";
+
+    private const string PotionArt = "(_)";
 
     public string Name { get; } = "Oswin";
 
     public bool IsArmorSoldOut { get; private set; }
     public bool IsWeaponSoldOut { get; private set; }
+    public int HealingPotionsLeft { get; private set; } = HealingPotionStock;
 
     public bool IsValidMerchantChoice(string? input)
     {
         return NormalizeChoice(input) != null;
     }
 
-    // Maps a typed command to "armor", "weapon" or "leave"; null if invalid.
+    // Maps a typed command to "armor", "weapon", "potion" or "leave"; null if invalid.
     public string? NormalizeChoice(string? input)
     {
         return input?.Trim().ToLower() switch
         {
             "a" or "armor" => "armor",
             "w" or "weapon" => "weapon",
+            "p" or "potion" => "potion",
             "l" or "leave" => "leave",
             _ => null
         };
@@ -43,6 +51,17 @@ public class Merchant
         player.Gold -= ItemPrice;
         player.Armor = new Armor("magical armor", ArmorProtection, ArmorArt);
         IsArmorSoldOut = true;
+        return true;
+    }
+
+    public bool BuyHealingPotion(Player player)
+    {
+        if (HealingPotionsLeft <= 0 || player.Gold < HealingPotionPrice)
+            return false;
+
+        player.Gold -= HealingPotionPrice;
+        player.HealingPotions++;
+        HealingPotionsLeft--;
         return true;
     }
 
@@ -94,6 +113,15 @@ public class Merchant
                         Console.WriteLine(messages.GetMessage("merchant_cannot_afford"));
                     break;
 
+                case "potion":
+                    if (HealingPotionsLeft <= 0)
+                        Console.WriteLine(messages.GetMessage("merchant_potions_sold_out"));
+                    else if (BuyHealingPotion(player))
+                        Console.WriteLine(string.Format(messages.GetMessage("merchant_bought_potion"), Name, player.HealingPotions));
+                    else
+                        Console.WriteLine(messages.GetMessage("merchant_cannot_afford"));
+                    break;
+
                 case "leave":
                     Console.WriteLine(string.Format(messages.GetMessage("merchant_farewell"), Name));
                     return;
@@ -124,6 +152,12 @@ public class Merchant
                     EnchantmentBonus)
                 + (IsWeaponSoldOut ? " " + messages.GetMessage("merchant_sold_out") : ""));
         }
+
+        Console.WriteLine(PotionArt);
+        Console.WriteLine(string.Format(messages.GetMessage("merchant_item_potion"), HealingPotionPrice) + " "
+            + (HealingPotionsLeft > 0
+                ? string.Format(messages.GetMessage("merchant_potions_left"), HealingPotionsLeft)
+                : messages.GetMessage("merchant_sold_out")));
 
         Console.WriteLine(messages.GetMessage("merchant_leave_option"));
     }

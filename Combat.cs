@@ -18,33 +18,75 @@ public class Combat
     {
         Console.WriteLine(GetCombatStatsDisplay());
 
+        bool playerAttacks = true;
+
         while (true)
         {
-            PlayerAttacksDragonSequence();
+            // In a drink round the player's turn was spent on the potion, so only the dragon attacks.
+            if (playerAttacks)
+            {
+                PlayerAttacksDragonSequence();
 
-            if (dragon.HealthPoints <= 0)
-                return true;
+                if (dragon.HealthPoints <= 0)
+                    return true;
+            }
 
             DragonAttacksPlayerSequence();
 
             if (player.HealthPoints <= 0)
                 return false;
 
-            Console.WriteLine(messages.GetMessage("attack_prompt"));
-            string? input = Console.ReadLine()?.Trim().ToLower();
+            string choice = PromptForCombatChoice();
 
-            if (input == "r" || input == "retreat")
+            if (choice == "retreat")
             {
                 PlayerRetreated = true;
                 Console.WriteLine(messages.GetMessage("retreat_combat"));
                 return false;
             }
 
+            playerAttacks = choice == "attack";
+
+            if (!playerAttacks)
+                PlayerDrinksHealingPotionSequence();
+        }
+    }
+
+    private string PromptForCombatChoice()
+    {
+        while (true)
+        {
+            Console.WriteLine(messages.GetMessage("attack_prompt"));
+            string? input = Console.ReadLine()?.Trim().ToLower();
+
             if (input == "a" || input == "attack")
-                continue;
+                return "attack";
+
+            if (input == "d" || input == "drink")
+                return "drink";
+
+            if (input == "r" || input == "retreat")
+                return "retreat";
 
             Console.WriteLine(messages.GetMessage("invalid"));
         }
+    }
+
+    // A refused drink still uses the player's turn.
+    public void PlayerDrinksHealingPotionSequence()
+    {
+        if (player.HealingPotions <= 0)
+        {
+            Console.WriteLine(string.Format(messages.GetMessage("potion_refused_none_left"), player.Name));
+            return;
+        }
+
+        int healed = player.DrinkHealingPotion();
+
+        if (healed == 0)
+            Console.WriteLine(string.Format(messages.GetMessage("potion_refused_maximum_health"), player.Name));
+        else
+            Console.WriteLine(string.Format(messages.GetMessage("potion_healed"), player.Name, healed, player.HealthPoints));
     }
 
     public string GetCombatStatsDisplay()
@@ -57,6 +99,7 @@ public class Combat
         output.Add(messages.GetMessage("stats_strength") + player.Strength);
         output.Add(messages.GetMessage("stats_agility") + player.Agility);
         output.Add(messages.GetMessage("stats_health") + player.HealthPoints);
+        output.Add(messages.GetMessage("stats_healing_potions") + player.HealingPotions);
 
         if (player.Weapon != null)
         {
