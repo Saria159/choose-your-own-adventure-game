@@ -60,8 +60,14 @@ public class Combat
 
         if (player.Weapon != null)
         {
-            output.Add(messages.GetMessage("stats_weapon") + messages.TranslateWeaponForDisplay(player.Weapon.Type));
+            output.Add(messages.GetMessage("stats_weapon") + messages.FormatWeaponForDisplay(player.Weapon));
             output.Add(messages.GetMessage("stats_damage") + player.Weapon.MaxDamage);
+        }
+
+        if (player.Armor != null)
+        {
+            output.Add(messages.GetMessage("stats_armor") + messages.GetMessage("magical_armor_name"));
+            output.Add(messages.GetMessage("stats_protection") + player.Armor.Protection);
         }
 
         output.Add("");

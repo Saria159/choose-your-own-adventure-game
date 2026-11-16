@@ -85,4 +85,11 @@ public class Messages
 
     public string TranslateWeaponForDisplay(string weaponType) =>
         _displayWeaponMap.TryGetValue(weaponType, out string? t) ? t : weaponType;
+
+    // Translated weapon name, wrapped in "magical {0}" (or its translation) once enchanted.
+    public string FormatWeaponForDisplay(Weapon weapon)
+    {
+        string name = TranslateWeaponForDisplay(weapon.Type);
+        return weapon.IsMagical ? string.Format(GetMessage("magical_weapon_format"), name) : name;
+    }
 }

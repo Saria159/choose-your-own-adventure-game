@@ -1,0 +1,130 @@
+public class Merchant
+{
+    public const int ItemPrice = 15;
+
+    public const int ArmorProtection = 10;
+
+    public const int EnchantmentBonus = 4;
+
+    private const string ArmorArt = "[|#|]";
+
+    public string Name { get; } = "Oswin";
+
+    public bool IsArmorSoldOut { get; private set; }
+    public bool IsWeaponSoldOut { get; private set; }
+
+    public bool IsValidMerchantChoice(string? input)
+    {
+        return NormalizeChoice(input) != null;
+    }
+
+    // Maps a typed command to "armor", "weapon" or "leave"; null if invalid.
+    public string? NormalizeChoice(string? input)
+    {
+        return input?.Trim().ToLower() switch
+        {
+            "a" or "armor" => "armor",
+            "w" or "weapon" => "weapon",
+            "l" or "leave" => "leave",
+            _ => null
+        };
+    }
+
+    public bool CanAfford(Player player)
+    {
+        return player.Gold >= ItemPrice;
+    }
+
+    public bool BuyArmor(Player player)
+    {
+        if (IsArmorSoldOut || !CanAfford(player))
+            return false;
+
+        player.Gold -= ItemPrice;
+        player.Armor = new Armor("magical armor", ArmorProtection, ArmorArt);
+        IsArmorSoldOut = true;
+        return true;
+    }
+
+    public bool BuyWeapon(Player player)
+    {
+        if (IsWeaponSoldOut || player.Weapon == null || !CanAfford(player))
+            return false;
+
+        player.Gold -= ItemPrice;
+        player.Weapon.MaxDamage += EnchantmentBonus;
+        player.Weapon.IsMagical = true;
+        IsWeaponSoldOut = true;
+        return true;
+    }
+
+    // Console loop for the South path encounter. Purchase rules live in the methods above.
+    public void RunEncounter(Player player, Messages messages)
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine(string.Format(messages.GetMessage("merchant_intro"), Name));
+        Console.ResetColor();
+
+        while (true)
+        {
+            ShowWares(player, messages);
+            Console.Write(messages.GetMessage("merchant_prompt"));
+
+            switch (NormalizeChoice(Console.ReadLine()))
+            {
+                case "armor":
+                    if (IsArmorSoldOut)
+                        Console.WriteLine(messages.GetMessage("merchant_already_sold"));
+                    else if (BuyArmor(player))
+                        Console.WriteLine(string.Format(messages.GetMessage("merchant_bought_armor"), Name));
+                    else
+                        Console.WriteLine(messages.GetMessage("merchant_cannot_afford"));
+                    break;
+
+                case "weapon" when player.Weapon != null:
+                    if (IsWeaponSoldOut)
+                        Console.WriteLine(messages.GetMessage("merchant_already_sold"));
+                    else if (BuyWeapon(player))
+                        Console.WriteLine(string.Format(
+                            messages.GetMessage("merchant_bought_weapon"),
+                            Name,
+                            messages.TranslateWeaponForDisplay(player.Weapon.Type),
+                            player.Weapon.MaxDamage));
+                    else
+                        Console.WriteLine(messages.GetMessage("merchant_cannot_afford"));
+                    break;
+
+                case "leave":
+                    Console.WriteLine(string.Format(messages.GetMessage("merchant_farewell"), Name));
+                    return;
+
+                default:
+                    Console.WriteLine(messages.GetMessage("invalid"));
+                    break;
+            }
+        }
+    }
+
+    private void ShowWares(Player player, Messages messages)
+    {
+        Console.WriteLine();
+        Console.WriteLine(string.Format(messages.GetMessage("merchant_gold"), player.Gold));
+
+        Console.WriteLine(ArmorArt);
+        Console.WriteLine(string.Format(messages.GetMessage("merchant_item_armor"), ItemPrice, ArmorProtection)
+            + (IsArmorSoldOut ? " " + messages.GetMessage("merchant_sold_out") : ""));
+
+        if (player.Weapon != null)
+        {
+            Console.WriteLine("*~" + player.Weapon.AsciiArt + "~*");
+            Console.WriteLine(string.Format(
+                    messages.GetMessage("merchant_item_weapon"),
+                    messages.TranslateWeaponForDisplay(player.Weapon.Type),
+                    ItemPrice,
+                    EnchantmentBonus)
+                + (IsWeaponSoldOut ? " " + messages.GetMessage("merchant_sold_out") : ""));
+        }
+
+        Console.WriteLine(messages.GetMessage("merchant_leave_option"));
+    }
+}
