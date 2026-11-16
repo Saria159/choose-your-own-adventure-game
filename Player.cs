@@ -18,7 +18,9 @@ public class Player
     public int Strength { get; set; }
     public int Agility { get; set; }
     public int HealthPoints { get; set; }
+    public int MaxHealthPoints { get; set; }
     public int Gold { get; set; }
+    public int HealingPotions { get; set; } = 1;
 
     public Weapon? Weapon { get; set; }
     public Armor? Armor { get; set; }
@@ -33,7 +35,8 @@ public class Player
 
         int strengthModifier = RollStrength(messages);
         RollAgility(messages);
-        RollHealthPoints(messages, strengthModifier);
+        PromptRoll(messages.GetMessage("roll_health"), messages);
+        RollHealthPoints(strengthModifier);
 
         PromptRoll(messages.GetMessage("roll_gold"), messages);
         RollGold();
@@ -128,10 +131,10 @@ public class Player
             Agility += _die.Roll(4);
     }
 
-    private void RollHealthPoints(Messages messages, int strengthModifier)
+    public void RollHealthPoints(int strengthModifier)
     {
-        PromptRoll(messages.GetMessage("roll_health"), messages);
         HealthPoints = _die.Roll(20) + strengthModifier;
+        MaxHealthPoints = HealthPoints;
     }
 
     // Returns the damage that reached HealthPoints.
@@ -151,6 +154,19 @@ public class Player
         HealthPoints -= healthLost;
 
         return healthLost;
+    }
+
+    // Returns the health restored, or 0 when refused (no potions, or already at maximum health).
+    // Never touches armor or Protection.
+    public int DrinkHealingPotion()
+    {
+        if (HealingPotions <= 0 || HealthPoints >= MaxHealthPoints)
+            return 0;
+
+        HealingPotions--;
+        int healed = Math.Min(_die.Roll(8), MaxHealthPoints - HealthPoints);
+        HealthPoints += healed;
+        return healed;
     }
 
     public void RollGold()
@@ -184,6 +200,7 @@ public class Player
         Console.WriteLine(messages.GetMessage("stats_agility") + Agility);
         Console.WriteLine(messages.GetMessage("stats_health") + HealthPoints);
         Console.WriteLine(messages.GetMessage("stats_gold") + Gold);
+        Console.WriteLine(messages.GetMessage("stats_healing_potions") + HealingPotions);
 
         if (Weapon != null)
         {
