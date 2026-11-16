@@ -93,12 +93,23 @@ public class Dragon
         }
 
         int damage = RollDamage();
-        player.HealthPoints -= damage;
+        int protectionBefore = player.Armor?.Protection ?? 0;
+        int healthLost = player.TakeDamage(damage);
+        int absorbed = protectionBefore - (player.Armor?.Protection ?? 0);
 
-        if (player.HealthPoints < 0)
-            player.HealthPoints = 0;
+        if (absorbed > 0 && player.Armor != null)
+        {
+            output.Add(string.Format(messages.GetMessage("armor_absorbed"), absorbed, player.Armor.Protection));
+            return string.Join(Environment.NewLine, output);
+        }
 
-        output.Add(string.Format(messages.GetMessage("dragon_damage_dealt"), Name, damage));
+        if (absorbed > 0)
+            output.Add(string.Format(messages.GetMessage("armor_shattered"), absorbed));
+
+        if (healthLost == 0 && absorbed > 0)
+            return string.Join(Environment.NewLine, output);
+
+        output.Add(string.Format(messages.GetMessage("dragon_damage_dealt"), Name, damage - absorbed));
         output.Add(string.Format(messages.GetMessage("player_health_now"), player.Name, player.HealthPoints));
 
         if (player.HealthPoints <= 0)

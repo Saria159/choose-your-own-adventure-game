@@ -1,6 +1,15 @@
 public class Player
 {
-    private readonly Die _die = new Die();
+    private readonly Die _die;
+
+    public Player() : this(new Die())
+    {
+    }
+
+    public Player(Die die)
+    {
+        _die = die;
+    }
 
     public string Name { get; set; } = "";
     public string Race { get; set; } = "";
@@ -9,8 +18,10 @@ public class Player
     public int Strength { get; set; }
     public int Agility { get; set; }
     public int HealthPoints { get; set; }
+    public int Gold { get; set; }
 
     public Weapon? Weapon { get; set; }
+    public Armor? Armor { get; set; }
 
     public void CreateCharacter(Messages messages)
     {
@@ -23,6 +34,9 @@ public class Player
         int strengthModifier = RollStrength(messages);
         RollAgility(messages);
         RollHealthPoints(messages, strengthModifier);
+
+        PromptRoll(messages.GetMessage("roll_gold"), messages);
+        RollGold();
 
         PromptForNextAction(messages);
     }
@@ -120,6 +134,30 @@ public class Player
         HealthPoints = _die.Roll(20) + strengthModifier;
     }
 
+    // Returns the damage that reached HealthPoints.
+    public int TakeDamage(int damage)
+    {
+        if (Armor != null)
+        {
+            int absorbed = Math.Min(damage, Armor.Protection);
+            Armor.Protection -= absorbed;
+            damage -= absorbed;
+
+            if (Armor.Protection <= 0)
+                Armor = null;
+        }
+
+        int healthLost = Math.Min(damage, HealthPoints);
+        HealthPoints -= healthLost;
+
+        return healthLost;
+    }
+
+    public void RollGold()
+    {
+        Gold = _die.Roll(20) + 10;
+    }
+
     private void PromptForNextAction(Messages messages)
     {
         while (true)
@@ -145,11 +183,18 @@ public class Player
         Console.WriteLine(messages.GetMessage("stats_strength") + Strength);
         Console.WriteLine(messages.GetMessage("stats_agility") + Agility);
         Console.WriteLine(messages.GetMessage("stats_health") + HealthPoints);
+        Console.WriteLine(messages.GetMessage("stats_gold") + Gold);
 
         if (Weapon != null)
         {
-            Console.WriteLine(messages.GetMessage("stats_weapon") + messages.TranslateWeaponForDisplay(Weapon.Type));
+            Console.WriteLine(messages.GetMessage("stats_weapon") + messages.FormatWeaponForDisplay(Weapon));
             Console.WriteLine(messages.GetMessage("stats_damage") + Weapon.MaxDamage);
+        }
+
+        if (Armor != null)
+        {
+            Console.WriteLine(messages.GetMessage("stats_armor") + messages.GetMessage("magical_armor_name"));
+            Console.WriteLine(messages.GetMessage("stats_protection") + Armor.Protection);
         }
     }
 
@@ -181,7 +226,7 @@ public class Player
         output.Add(string.Format(
             messages.GetMessage("player_attack_intro"),
             messages.TranslateOccupationForDisplay(Occupation),
-            messages.TranslateWeaponForDisplay(Weapon.Type)
+            messages.FormatWeaponForDisplay(Weapon)
         ));
 
         // If this fails to compile, change AsciiArt to whatever exists in Weapon.cs

@@ -42,6 +42,9 @@ public class Game
                 Player player = new Player();
                 player.CreateCharacter(messages);
 
+                // One merchant per adventure, so sold-out items stay sold out between South trips.
+                Merchant merchant = new Merchant();
+
                 bool inAdventureMenu = true;
                 while (inAdventureMenu)
                 {
@@ -56,6 +59,7 @@ public class Game
                     else if (selectedPath == "south")
                     {
                         Console.WriteLine(messages.GetMessage("south_path_narrative"));
+                        merchant.RunEncounter(player, messages);
                     }
                     else if (selectedPath == "north")
                     {
