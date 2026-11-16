@@ -140,31 +140,4 @@ public class MerchantTests
         Assert.AreEqual(10, player.Armor!.Protection);
         Assert.AreEqual(16, player.Weapon!.MaxDamage);
     }
-
-    [TestMethod]
-    [DataRow("a")]
-    [DataRow("armor")]
-    [DataRow("w")]
-    [DataRow("weapon")]
-    [DataRow("l")]
-    [DataRow("leave")]
-    [DataRow("ARMOR")]
-    [DataRow("W")]
-    [DataRow("  leave  ")]
-    public void IsValidMerchantChoice_ReturnsTrue_ForAcceptedCommands(string input)
-    {
-        Assert.IsTrue(new Merchant().IsValidMerchantChoice(input));
-    }
-
-    [TestMethod]
-    [DataRow(null)]
-    [DataRow("")]
-    [DataRow("   ")]
-    [DataRow("x")]
-    [DataRow("buy")]
-    [DataRow("1")]
-    public void IsValidMerchantChoice_ReturnsFalse_ForAnythingElse(string? input)
-    {
-        Assert.IsFalse(new Merchant().IsValidMerchantChoice(input));
-    }
 }

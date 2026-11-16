@@ -75,14 +75,4 @@ public class MerchantPotionTests
         Assert.IsFalse(merchant.IsArmorSoldOut);
         Assert.IsFalse(merchant.IsWeaponSoldOut);
     }
-
-    [TestMethod]
-    [DataRow("p")]
-    [DataRow("potion")]
-    [DataRow("POTION")]
-    [DataRow("  p  ")]
-    public void NormalizeChoice_RecognisesPotionCommands(string input)
-    {
-        Assert.AreEqual("potion", new Merchant().NormalizeChoice(input));
-    }
 }

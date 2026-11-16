@@ -6,11 +6,14 @@ public class Combat
 
     public bool PlayerRetreated { get; private set; }
 
-    public Combat(Player player, Dragon dragon, Messages messages)
+    private readonly CommandPrompt prompt;
+
+    public Combat(Player player, Dragon dragon, Messages messages, CommandPrompt? prompt = null)
     {
         this.player = player;
         this.dragon = dragon;
         this.messages = messages;
+        this.prompt = prompt ?? new CommandPrompt(Console.In, Console.Out, messages);
         PlayerRetreated = false;
     }
 
@@ -36,7 +39,8 @@ public class Combat
             if (player.HealthPoints <= 0)
                 return false;
 
-            string choice = PromptForCombatChoice();
+            // Inventory never comes back here: the prompt handles it as a free action, so the dragon gets no turn.
+            string choice = prompt.Ask(CommandSet.Combat, player);
 
             if (choice == "retreat")
             {
@@ -49,33 +53,6 @@ public class Combat
 
             if (!playerAttacks)
                 PlayerDrinksHealingPotionSequence();
-        }
-    }
-
-    private string PromptForCombatChoice()
-    {
-        while (true)
-        {
-            Console.WriteLine(messages.GetMessage("attack_prompt"));
-            string? input = Console.ReadLine()?.Trim().ToLower();
-
-            // Free action: stays inside the prompt loop, so the dragon doesn't get a turn.
-            if (Game.IsInventoryCommand(input))
-            {
-                player.DisplayInventory(messages);
-                continue;
-            }
-
-            if (input == "a" || input == "attack")
-                return "attack";
-
-            if (input == "d" || input == "drink")
-                return "drink";
-
-            if (input == "r" || input == "retreat")
-                return "retreat";
-
-            Console.WriteLine(messages.GetMessage("invalid"));
         }
     }
 

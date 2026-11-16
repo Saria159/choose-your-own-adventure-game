@@ -215,12 +215,6 @@ public class Player
         }
     }
 
-    public void DisplayInventory(Messages messages)
-    {
-        foreach (string line in GetInventoryDisplay(messages))
-            Console.WriteLine(line);
-    }
-
     // Everything the player carries or wears, one line each. Never prints.
     public List<string> GetInventoryDisplay(Messages messages)
     {

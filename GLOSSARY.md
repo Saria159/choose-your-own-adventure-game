@@ -14,6 +14,16 @@ _Avoid_: Direction, road, trail
 A scene the player meets on a path, such as the merchant encounter or the dragon encounter.
 _Avoid_: Event, scene, battle
 
+### Input
+
+**Command**:
+A word the player types to choose an action, such as attack, north or inventory. Commands are always English, whatever the language (see ADR-0001).
+_Avoid_: Option, input, choice
+
+**Command prompt**:
+Asks the player for a command and asks again until it gets a valid one. Checking the Inventory is a free action at every command prompt that has a player.
+_Avoid_: Menu, input loop
+
 ### Trade
 
 **Merchant**:

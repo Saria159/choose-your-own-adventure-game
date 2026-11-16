@@ -8,6 +8,8 @@ public class FakeDie : Die
         _rolls = new Queue<int>(rolls);
     }
 
+    public int RemainingRolls => _rolls.Count;
+
     public override int Roll(int sides)
     {
         if (_rolls.Count == 0)
