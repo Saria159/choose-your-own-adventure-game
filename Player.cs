@@ -215,6 +215,39 @@ public class Player
         }
     }
 
+    public void DisplayInventory(Messages messages)
+    {
+        foreach (string line in GetInventoryDisplay(messages))
+            Console.WriteLine(line);
+    }
+
+    // Everything the player carries or wears, one line each. Never prints.
+    public List<string> GetInventoryDisplay(Messages messages)
+    {
+        var lines = new List<string> { messages.GetMessage("inventory_header") };
+
+        if (Weapon != null)
+        {
+            lines.Add(messages.GetMessage("stats_weapon") + messages.FormatWeaponForDisplay(Weapon));
+            lines.Add(messages.GetMessage("stats_damage") + Weapon.MaxDamage);
+        }
+
+        if (Armor != null)
+        {
+            lines.Add(messages.GetMessage("stats_armor") + messages.GetMessage("magical_armor_name"));
+            lines.Add(messages.GetMessage("stats_protection") + Armor.Protection);
+        }
+        else
+        {
+            lines.Add(messages.GetMessage("stats_armor") + messages.GetMessage("inventory_no_armor"));
+        }
+
+        lines.Add(messages.GetMessage("stats_healing_potions") + HealingPotions);
+        lines.Add(messages.GetMessage("stats_gold") + Gold);
+
+        return lines;
+    }
+
     public int RollAttack()
     {
         return _die.Roll(20);

@@ -26,6 +26,10 @@ _Avoid_: Coins, money, currency
 
 ### Equipment
 
+**Inventory**:
+Everything the player is carrying or wearing: their weapon, armor, healing potions and gold. The player can check it at the fork, at the merchant, when facing the dragon, and during the dragon fight.
+_Avoid_: Bag, backpack, items, gear
+
 **Weapon**:
 What a combatant attacks with. Its maximum damage sets the size of the damage roll.
 

@@ -59,6 +59,13 @@ public class Combat
             Console.WriteLine(messages.GetMessage("attack_prompt"));
             string? input = Console.ReadLine()?.Trim().ToLower();
 
+            // Free action: stays inside the prompt loop, so the dragon doesn't get a turn.
+            if (Game.IsInventoryCommand(input))
+            {
+                player.DisplayInventory(messages);
+                continue;
+            }
+
             if (input == "a" || input == "attack")
                 return "attack";
 
